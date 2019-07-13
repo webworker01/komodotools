@@ -6,6 +6,13 @@
 # Requires jq v1.5+, bc - sudo apt-get install jq bc
 #
 # komodo-cli, bitcoin-cli, chips-cli and gamecredits-cli installed (e.g. symlinked to /usr/local/bin)
+#
+# For "first" party stats:
+# ./stats
+#
+# For "third" party stats
+# ./stats 3
+#
 
 #==Options - Only Change These==
 
@@ -32,13 +39,23 @@ declare -A repos=(
 [VRSC]='$HOME/VerusCoin origin/master'
 )
 
-#declare non komodo clis - symlink them to /usr/local/bin or set the full path accessible as the second part of each string, the 3rd entry is the name of the data dir for the coin and assumes they are in $HOME
-othercoins=(
+firstcoins=(
 'BTC bitcoin-cli .bitcoin'
-'CHIPS chips-cli .chips'
-'GAME gamecredits-cli .gamecredits'
-'EMC2 einsteinium-cli .einsteinium'
-'GIN gincoin-cli .gincoincore'
+)
+
+if [[ ! -z $1 ]] && [[ "$1" == "3" ]]; then
+    showthirdparty=1
+else
+    showthirdparty=0
+fi
+
+#declare non komodo clis - symlink them to /usr/local/bin or set the full path accessible as the second part of each string, the 3rd entry is the name of the data dir for the coin and assumes they are in $HOME
+thirdcoins=(
+'CHIPS $HOME/chips3/src/chips-cli .chips'
+'GAME $HOME/GameCredits/src/gamecredits-cli .gamecredits'
+'EMC2 $HOME/einsteinium/src/einsteinium-cli .einsteinium'
+'GIN $HOME/gincoin-core/src/gincoin-cli .gincoincore'
+'VRSC $HOME/VerusCoin/src/verus-cli .komodo/VRSC'
 )
 
 #==End Options==
@@ -146,6 +163,12 @@ outputstats ()
             "$(ls -lh ~/.komodo/wallet.dat  | awk '{print $5}')" \
             "$(echo $kmdtxinfo | jq '[.[] | select(.generated==true)] | length') mined"
 
+    if (( showthirdparty < 1 )); then
+        othercoins=$firstcoins
+    else
+        othercoins=$thirdcoins
+    fi
+
     for coins in "${othercoins[@]}"; do
         coin=($coins)
 
@@ -199,6 +222,7 @@ outputstats ()
                 "$(ls -lh ~/${coin[2]}/wallet.dat | awk '{print $5}')"
     done
 
+    if (( showthirdparty < 1 )); then
     lastcoin=(${coinlist[-1]})
     secondlast=(${coinlist[-2]})
     for coins in "${coinlist[@]}"; do
@@ -242,8 +266,9 @@ outputstats ()
             if [[ ${coin[0]} != ${lastcoin[0]} ]]; then
                 echo
             fi
-        fi 
+        fi
     done
+    fi
 }
 
 if [ "$sleepytime" != "false" ]; then
