@@ -12,7 +12,7 @@
 # blocknotify=/home/komodo/minerfixer %s
 #
 
-lastgen=$(komodo-cli listtransactions "" 777 | jq '[.[] | select(.generated==true)] | .[-1]')
+lastgen=$(komodo-cli listunspent | jq '[.[] | select(.generated==true)] | .[-1]')
 
 if [[ "$lastgen" != "null" ]]; then
     confirmations=$(echo $lastgen | jq .confirmations)
